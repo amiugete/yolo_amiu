@@ -61,3 +61,6 @@ python main.py
 * Cambia la cartella delle immagini modificando `images_folder`.
 * Modifica le estensioni supportate tramite `image_extensions`.
 * Cambia il livello di logging (`INFO`, `DEBUG`, `WARNING`) nel `basicConfig`.
+
+
+
