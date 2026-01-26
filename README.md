@@ -1,6 +1,7 @@
 # Controllo Immagini Sensibili
 
 Questo progetto permette di **analizzare immagini presenti in una cartella e identificare quelle sensibili**. I risultati vengono registrati sia sul terminale sia su un file di log.
+Le immagine che vengono scartate sono quelle di cui verranno rilevate presenza di persone o veicoli
 
 ## Requisiti
 
