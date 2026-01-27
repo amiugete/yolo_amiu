@@ -5,18 +5,25 @@ Le immagine che vengono scartate sono quelle di cui verranno rilevate presenza d
 
 ## Requisiti
 
-* Python 3.10 versione esatta nel requirements per evitare conflitti con pytorch
+* Python 3.10 (3.10-64) versione esatta nel requirements per evitare conflitti con pytorch e ultralytics yolo
+* pytorch
+* ultralytics
 * Modulo `image_sensitive` (per rilevare contenuti sensibili)
 * Librerie standard: `pathlib`, `logging`, `datetime`
+* Client Oracle versione instantclient_19_29 (download [da Oracle ](https://download.oracle.com/otn_software/nt/instantclient/1929000/instantclient-basic-windows.x64-19.29.0.0.0dbru.zip))
 
 ## Librerie
+annotated-types==0.7.0
 certifi==2026.1.4
+cffi==2.0.0
 charset-normalizer==3.4.4
 contourpy==1.3.3
+cryptography==46.0.3
 cycler==0.12.1
 filelock==3.20.3
 fonttools==4.61.1
 fsspec==2026.1.0
+greenlet==3.3.1
 idna==3.11
 Jinja2==3.1.6
 kiwisolver==1.4.9
@@ -27,20 +34,27 @@ networkx==3.6.1
 numpy==1.26.4
 opencv-python==4.13.0.90
 opencv-python-headless==4.11.0.86
+oracledb==3.4.1
 packaging==26.0
 pillow==10.2.0
 polars==1.37.1
 polars-runtime-32==1.37.1
 psutil==7.2.1
+pycparser==3.0
+pydantic==2.12.5
+pydantic_core==2.41.5
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
 PyYAML==6.0.3
 requests==2.32.5
 scipy==1.17.0
 six==1.17.0
+SQLAlchemy==2.0.46
 sympy==1.14.0
 torch==2.1.2
 torchvision==0.16.2
+typing-inspection==0.4.2
 typing_extensions==4.15.0
 ultralytics==8.4.7
 ultralytics-thop==2.0.18
@@ -50,7 +64,7 @@ urllib3==2.6.3
 
 1. Clona il repository o scarica i file.
 2. Crea una cartella `images` nella stessa directory dello script.
-3. Assicurati che il modulo `image_sensitive` sia installato:
+3. Assicurati che il file .env contenga le informazioni per la connessione incluso il percorso assoluto del client con il driver di connessione
 
 ```bash
 ```
@@ -89,7 +103,7 @@ python main.py
 ```
 2026-01-26 14:32:01 - INFO - Trovate 5 immagini da processare
 2026-01-26 14:32:02 - INFO - immagine1.jpg - OK
-2026-01-26 14:32:02 - WARNING - immagine2.png - SCARTATA (rilevato: nudità)
+2026-01-26 14:32:02 - WARNING - immagine2.png - SCARTATA (rilevato: persona)
 2026-01-26 14:32:03 - INFO - Processamento completato
 ```
 

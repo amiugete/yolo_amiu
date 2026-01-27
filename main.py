@@ -1,9 +1,15 @@
-from image_sensitive import is_image_sensitive
+from engine.image_sensitive import is_image_sensitive
 from pathlib import Path
 import logging
+from repository.segnalazioni_immagini_repo import get_segnalazioni_immagini
+from config.database.database import execute_query
+from rest.client import get_auth_session
+from config.commons import get_config_values_env,config_folder
+from models.models import SegnalazioneImmagine
 from datetime import datetime
+from engine.write_image_business import writeImageOnFolderImages,verify_and_process_images
 
-# Configura il logging
+############################# Configura il logging ##################################
 log_file = Path("logs") / f"image_processing_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_file.parent.mkdir(exist_ok=True)
 
@@ -17,26 +23,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-images_folder = Path("images")
-images_folder.mkdir(exist_ok=True)
+# Carica variabili d'ambiente dal file .env
+LIMIT, USER, PWD, BASE_API_URL_AUTH, IMAGES_STORE_PATH, OK_PATH, KO_PATH = get_config_values_env()
+# Crea cartelle per immagini ok e ko
+config_folder(IMAGES_STORE_PATH, OK_PATH, KO_PATH)
 
-# Estensioni immagine supportate
-image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.gif', '.webp'}
+# Strappo il token di autenticazione per le chiamate API
+session_with_token = get_auth_session(USER, PWD, BASE_API_URL_AUTH)
 
-# Prendi tutti i file immagine dalla cartella
-image_files = [f for f in images_folder.iterdir() if f.suffix.lower() in image_extensions]
+#Esegue query per prendere le immagini da processare
+sql = get_segnalazioni_immagini()
+resultSet = execute_query(sql, {"limit": LIMIT})
+segnalazioniImmagini = [SegnalazioneImmagine(**row) for row in resultSet.mappings()]
+logger.info("Esecuzione query per recuperare immagini da processare")
 
-if not image_files:
-    logger.warning(f"Nessuna immagine trovata nella cartella '{images_folder}'")
+if segnalazioniImmagini is not None and len(segnalazioniImmagini) > 0:
+    for segnalazione in segnalazioniImmagini:
+        writeImageOnFolderImages(session_with_token, segnalazione, Path(IMAGES_STORE_PATH),logger)
+    verify_and_process_images(Path(IMAGES_STORE_PATH), Path(KO_PATH), Path(OK_PATH),logger)
 else:
-    logger.info(f"Trovate {len(image_files)} immagini da processare")
-    
-    for image_path in image_files:
-        sensitive, reason = is_image_sensitive(str(image_path))
-        
-        if sensitive:
-            logger.warning(f"{image_path.name} - SCARTATA (rilevato: {reason})")
-        else:
-            logger.info(f"{image_path.name} - OK")
-    
-    logger.info("Processamento completato")
+    logger.info("Nessuna immagine da processare")
+
+logger.info("Processamento completato")
+#####################################################################################################
+
+
+
+
+
+
