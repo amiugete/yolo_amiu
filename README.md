@@ -5,7 +5,7 @@ Le immagine che vengono scartate sono quelle di cui verranno rilevate presenza d
 
 ## Requisiti
 
-* Python 3.10 (3.10-64) versione esatta nel requirements per evitare conflitti con pytorch e ultralytics yolo
+* Python 3.10 (3.10-5) versione esatta nel requirements per evitare conflitti con pytorch e ultralytics yolo
 * pytorch
 * ultralytics
 * Modulo `image_sensitive` (per rilevare contenuti sensibili)
