@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 import oracledb
 import logging
+from typing import List
 
 # Carica le variabili dal file .env
 load_dotenv()
@@ -37,14 +38,19 @@ def execute_query(sql, params=None):
         return result
    
  #################### Funzione di esecuzione query multiple in transazione ########################
-def execute_transaction(queries_with_params):
+def execute_transaction_immagini(list_ids: List[int]) -> bool:
     """
-    Riceve una lista di tuple (sql, params)
+    Riceve una lista di id_richiesta delle immagini per poi andare in update aggiornando il flg_lettura a 1
     """
+    params = [{"id_val": id_val} for id_val in list_ids]
     try:
         with engine.begin() as connection:
-            for sql, params in queries_with_params:
-                connection.execute(text(sql), params)
+            connection.execute(text("INSERT INTO STRADE.temp_id_richiesta (id) VALUES (:id_val)"), params)
+            connection.execute(text("""UPDATE STRADE.SEGNALAZIONI_IMMAGINI
+                                       SET FLG_LETTURA = 1
+                                       WHERE ID_RICHIESTA IN 
+                                      (SELECT id FROM STRADE.temp_id_richiesta)
+                                    """))
         return True
     except Exception as e:
         logger.error(f"Transazione fallita: {e}")
