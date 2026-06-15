@@ -6,7 +6,7 @@ class SegnalazioneImmagine(BaseModel):
     url: Optional[str] = None
     descrizione_richiesta: Optional[str] = None
     flg_lettura: Optional[int] = None  # 0 = non letta, 1 = letta
-
+    flg_archiviata: Optional[int] = None  # 0 = non archiviata, 1 = archiviata
 
 
 

@@ -35,7 +35,7 @@ def execute_query(sql, params=None):
             return result
    except Exception as e:
         logger.error(f"Errore SQL o di connessione: {str(e)}")
-        return result
+        return None
    
  #################### Funzione di esecuzione query multiple in transazione ########################
 def execute_transaction_immagini(list_ids: List[int]) -> bool:
@@ -54,5 +54,26 @@ def execute_transaction_immagini(list_ids: List[int]) -> bool:
         return True
     except Exception as e:
         logger.error(f"Transazione fallita: {e}")
+        return False
+
+
+def reset_flg_archiviata_not_in_ids(list_ids: List[str]) -> bool:
+    """Resettare FLG_ARCHIVIATA a 0 per tutte le richieste archiviate non presenti nella lista."""
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM STRADE.temp_id_richiesta"))
+            if list_ids:
+                params = [{"id_val": id_val} for id_val in list_ids]
+                connection.execute(text("INSERT INTO STRADE.temp_id_richiesta (id) VALUES (:id_val)"), params)
+
+            connection.execute(text("""
+                UPDATE STRADE.SEGNALAZIONI_IMMAGINI
+                SET FLG_ARCHIVIATA = 0
+                WHERE FLG_ARCHIVIATA = 1
+                AND ID_RICHIESTA NOT IN (SELECT id FROM STRADE.temp_id_richiesta)
+            """))
+        return True
+    except Exception as e:
+        logger.error(f"Errore durante il reset FLG_ARCHIVIATA: {e}")
         return False
 

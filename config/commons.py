@@ -18,10 +18,24 @@ def get_config_values_env():
     PWD = os.getenv("USER_AUTH_PWD")
     BASE_API_URL_AUTH = os.getenv("BASE_API_URL_AUTH")
     IMAGES_STORE_PATH = os.getenv("IMAGES_STORE_PATH")
-    OK_PATH = IMAGES_STORE_PATH + "/ok"
-    KO_PATH = IMAGES_STORE_PATH + "/ko"
+    SHARED_IMAGES_PATH = os.getenv("SHARED_IMAGES_PATH")
+    OK_PATH = SHARED_IMAGES_PATH + "/ok"
+    KO_PATH = SHARED_IMAGES_PATH + "/ko"
 
-    return LIMIT, USER, PWD, BASE_API_URL_AUTH, IMAGES_STORE_PATH, OK_PATH, KO_PATH
+    return LIMIT, USER, PWD, BASE_API_URL_AUTH, IMAGES_STORE_PATH, OK_PATH, KO_PATH, SHARED_IMAGES_PATH
+
+def get_config_values_env_mig():
+    """
+    Recupera i valori di configurazione dal file .env
+    """
+     # Recupera i valori dalle variabili d'ambiente
+    LIMIT = os.getenv("LIMIT_ROWS")
+    USER = os.getenv("USER_AUTH_API")
+    PWD = os.getenv("USER_AUTH_PWD")
+    BASE_API_URL_AUTH = os.getenv("BASE_API_URL_AUTH")
+    SHARED_IMAGES_PATH = os.getenv("SHARED_IMAGES_PATH")
+
+    return LIMIT, USER, PWD, BASE_API_URL_AUTH, SHARED_IMAGES_PATH
 
 
 
