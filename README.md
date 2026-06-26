@@ -1,117 +1,117 @@
-# Controllo Immagini Sensibili
+# yolo_amiu
 
-Questo progetto permette di **analizzare immagini presenti in una cartella e identificare quelle sensibili**. I risultati vengono registrati sia sul terminale sia su un file di log.
-Le immagine che vengono scartate sono quelle di cui verranno rilevate presenza di persone o veicoli
+Questo repository contiene script Python per gestire immagini sensibili, migrare immagini da un sistema esterno, ripristinare immagini, e anonimizzare/mettere in ordine file CSV.
 
-## Requisiti
+## Panorama generale
 
-* Python 3.10 (3.10-5) versione esatta nel requirements per evitare conflitti con pytorch e ultralytics yolo
-* pytorch
-* ultralytics
-* Modulo `image_sensitive` (per rilevare contenuti sensibili)
-* Librerie standard: `pathlib`, `logging`, `datetime`
-* Client Oracle versione instantclient_19_29 (download [da Oracle ](https://download.oracle.com/otn_software/nt/instantclient/1929000/instantclient-basic-windows.x64-19.29.0.0.0dbru.zip))
+- `main.py` = controlla immagini nella cartella condivisa e le sposta in `ok/` o `ko/`.
+- `migration_img.py` = scarica immagini da API/database e le salva nella cartella condivisa, aggiornando un CSV di metadati.
+- `sanate.py` = ripristina il flag di archiviazione nel database per le richieste non presenti nel CSV.
+- `rollback.py` = riporta le immagini da `ok/` e `ko/` nella cartella `shared_images`.
+- `censura_descrizioni.py` = anonimizza contenuti sensibili in un file CSV.
+- `dupplicati.py` = elimina righe duplicate da un file CSV.
 
-## Librerie
-annotated-types==0.7.0
-certifi==2026.1.4
-cffi==2.0.0
-charset-normalizer==3.4.4
-contourpy==1.3.3
-cryptography==46.0.3
-cycler==0.12.1
-filelock==3.20.3
-fonttools==4.61.1
-fsspec==2026.1.0
-greenlet==3.3.1
-idna==3.11
-Jinja2==3.1.6
-kiwisolver==1.4.9
-MarkupSafe==3.0.3
-matplotlib==3.10.8
-mpmath==1.3.0
-networkx==3.6.1
-numpy==1.26.4
-opencv-python==4.13.0.90
-opencv-python-headless==4.11.0.86
-oracledb==3.4.1
-packaging==26.0
-pillow==10.2.0
-polars==1.37.1
-polars-runtime-32==1.37.1
-psutil==7.2.1
-pycparser==3.0
-pydantic==2.12.5
-pydantic_core==2.41.5
-pyparsing==3.3.2
-python-dateutil==2.9.0.post0
-python-dotenv==1.2.1
-PyYAML==6.0.3
-requests==2.32.5
-scipy==1.17.0
-six==1.17.0
-SQLAlchemy==2.0.46
-sympy==1.14.0
-torch==2.1.2
-torchvision==0.16.2
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-ultralytics==8.4.7
-ultralytics-thop==2.0.18
-urllib3==2.6.3
+## Cosa fa ogni script
 
-## Installazione
+### `main.py`
+- Legge la configurazione dal file `.env`.
+- Crea le cartelle `ok/` e `ko/` dentro `SHARED_IMAGES_PATH`.
+- Scorre le immagini valide nella cartella condivisa.
+- Usa il modello di rilevamento per decidere se un’immagine è sensibile.
+- Sposta le immagini sensibili in `ko/` e le altre in `ok/`.
+- Scrive log su file e console.
 
-1. Clona il repository o scarica i file.
-2. Crea una cartella `images` nella stessa directory dello script.
-3. Assicurati che il file .env contenga le informazioni per la connessione incluso il percorso assoluto del client con il driver di connessione
+### `migration_img.py`
+- Si autentica via API usando le credenziali in `.env`.
+- Esegue query per recuperare segnalazioni immagini dal database.
+- Scarica le immagini remote e le salva in `SHARED_IMAGES_PATH`.
+- Scrive un file CSV `dati_immagini/dati_immagini.csv` con `id_richiesta`, `descrizione_richiesta`, `nome_file`.
+- Aggiorna il flag `FLG_ARCHIVIATA = 1` per le immagini archiviate.
+
+### `sanate.py`
+- Legge il CSV generato nella cartella condivisa.
+- Estrae gli `id_richiesta` presenti nel CSV.
+- Chiama una funzione per resettare `FLG_ARCHIVIATA = 0` nel database per tutte le richieste non presenti nel CSV.
+- Utile quando si vuole correggere lo stato di archiviazione dopo una migrazione o un errore.
+
+### `rollback.py`
+- Legge la configurazione dal file `.env`.
+- Sposta tutti i file immagine da `OK_PATH` e `KO_PATH` nella cartella `SHARED_IMAGES_PATH`.
+- Salta i file che non sono immagini o che già esistono nella cartella di destinazione.
+- Serve a ripristinare le immagini nella cartella condivisa.
+
+### `censura_descrizioni.py`
+- Prende in input un CSV con colonne come `id_richiesta`, `descrizione_richiesta`, `nome_file`.
+- Anonimizza il testo in `descrizione_richiesta`, censurando:
+  - persone, organizzazioni, luoghi
+  - indirizzi
+  - email
+  - numeri di telefono
+  - nomi in maiuscolo e nomi dopo "di"
+- Salva i risultati in un nuovo file con suffisso `_censurato`.
+- Usa spaCy per il riconoscimento entità in italiano.
+
+### `dupplicati.py`
+- Legge un file CSV e controlla le righe duplicate.
+- Usa la colonna `nome_file` (default) per identificare i duplicati.
+- Riscrive il CSV senza duplicati e crea un backup con estensione `.bak`.
+- Utile per pulire CSV di metadati prima di usarli in altri script.
+
+## Requisiti principali
+
+- Python 3.10
+- `pytorch`
+- `ultralytics`
+- `spacy`
+- `oracledb`
+- `requests`
+- `python-dotenv`
+
+Installa le dipendenze con:
 
 ```bash
+python -m pip install -r requirements.txt
 ```
 
-## Struttura del progetto
+## Configurazione
 
-```
-.
-├── images/                 # Immagini da analizzare
-├── logs/                   # File di log generati dallo script
-├── image_sensitive.py      # Modulo per rilevamento immagini sensibili
-└── main.py                 # Script principale
-```
+Crea un file `.env` con almeno queste variabili:
 
-## Come usare
+- `LIMIT_ROWS`
+- `USER_AUTH_API`
+- `USER_AUTH_PWD`
+- `BASE_API_URL_AUTH`
+- `SHARED_IMAGES_PATH`
+- `IMAGES_STORE_PATH`
 
-1. Inserisci le immagini da controllare nella cartella `images`.
-2. Esegui lo script:
+`config.commons` legge queste variabili per definire:
+- `SHARED_IMAGES_PATH`
+- `OK_PATH`
+- `KO_PATH`
+
+## Esempi d’uso
 
 ```bash
 python main.py
+python migration_img.py
+python rollback.py
+python censura_descrizioni.py --csv path/to/file.csv
+python dupplicati.py path/to/file.csv
 ```
 
-3. Lo script:
+## Log
 
-* Crea la cartella `logs` se non esiste.
-* Genera un file di log con timestamp.
-* Analizza immagini con estensioni supportate: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.webp`.
-* Segnala sul terminale e nel log:
+- Gli script scrivono i log nella cartella `logs/`.
+- I file di log includono un timestamp nel nome.
 
-  * `OK` → immagine sicura
-  * `SCARTATA` → immagine sensibile, con motivo
+## Note rapide
 
-## Esempio di output
-
-```
-2026-01-26 14:32:01 - INFO - Trovate 5 immagini da processare
-2026-01-26 14:32:02 - INFO - immagine1.jpg - OK
-2026-01-26 14:32:02 - WARNING - immagine2.png - SCARTATA (rilevato: persona)
-2026-01-26 14:32:03 - INFO - Processamento completato
-```
-
-## Personalizzazione
-
-* Cambia la cartella delle immagini modificando `images_folder`.
-* Modifica le estensioni supportate tramite `image_extensions`.
-* Cambia il livello di logging (`INFO`, `DEBUG`, `WARNING`) nel `basicConfig`.
+- `main.py` elabora immagini già presenti in `SHARED_IMAGES_PATH`.
+- `migration_img.py` scarica immagini remote e aggiorna il CSV.
+- `sanate.py` corregge lo stato dei flag nel database.
+- `rollback.py` ripristina immagini in `shared_images`.
+- `censura_descrizioni.py` anonimizza descrizioni CSV.
+- `dupplicati.py` rimuove righe duplicate da un CSV.
 
 
 
